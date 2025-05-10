@@ -1,0 +1,136 @@
+родитель(алексей, мария).
+родитель(алексей, иван).
+родитель(мария, ольга).
+родитель(антон, катя).
+
+предок_потомок(X, Y) :- родитель(X, Y).
+предок_потомок(X, Y) :- родитель(X, Z), предок_потомок(Z, Y).
+
+/*
+
+предок_потомок(алексей, X).
+    ├─ пробуем 1 правило: предок_потомок(X,Y) :- родитель(X,Y)
+    |  └─ Call: родитель(алексей, X)
+    |     ├─ Факт: родитель(алексей, мария) → X=мария
+    |     |  └─ Успешно: X=мария
+    |     └─ Fact: родитель(алексей, иван) → X=иван
+    |        └─ Успешно: X=иван
+    └─ пробуем 2 правило: предок_потомок(X,Y) :- родитель(X,Z), предок_потомок(Z,Y)
+       ├─ Факт: родитель(алексей, Z)
+       |  ├─ Z=мария
+       |  └─ Z=иван
+       └─ For each Z:
+          ├─ Z=мария:
+          |  └─ Call: предок_потомок(мария, X1)
+          |     ├─ правило 1: родитель(мария, X1) → X1=ольга
+          |     └─ правило 2: родитель(мария,Z2), предок_потомок(Z2,X1) → нет фактов
+          └─ Z=иван:
+             └─ Call: предок_потомок(иван, X1)
+                ├─ правило 1: родитель(иван, X1) → false
+                └─ правило 2: родитель(иван,Z2), предок_потомок(Z2,X1) → нет фактов
+*/
+
+
+my_append([], L, L).
+my_append([H|T], L, [H|R]) :- my_append(T, L, R).
+
+/*
+my_append([a,b,c], List, [Head | Tail]).
+    ├─ вызываем 2 правило: my_append([H|T], L, [H|R]) :- my_append(T, L, R)
+    |  ├─ переменные: [H|T]=[a,b,c], L=List, [H|R]=[Head|Tail]
+    |  |  ├─ H=a, T=[b,c]
+    |  |  ├─ Head=a, R=Tail
+    |  └─ Call: my_append([b,c], List, Tail)
+    |     ├─ вызываем 2 правило
+    |     |  ├─ переменные: [H1|T1]=[b,c], L=List, [H1|R1]=Tail
+    |     |  |  ├─ H1=b, T1=[c]
+    |     |  |  ├─ Tail=[b|R1]
+    |     |  └─ Call: my_append([c], List, R1)
+    |     |     ├─ вызываем 2 правило
+    |     |     |  ├─ переменные: [H2|T2]=[c], L=List, [H2|R2]=R1
+    |     |     |  |  ├─ H2=c, T2=[]
+    |     |     |  |  ├─ R1=[c|R2]
+    |     |     |  └─ Call: my_append([], List, R2)
+    |     |     |     ├─ вызываем 1 правило: my_append([], L, L)
+    |     |     |     |  ├─ переменные: R2=List
+    |     |     |     |  └─ Success
+    |     |     |     └─ No more rules
+    |     |     └─ Имеем:
+    |     |        R1 = [c|List]
+    |     |        Tail = [b|[c|List]] = [b,c|List]
+    |     └─ Сейчас получаем:
+    |        [Head|Tail] = [a|[b,c|List]] = [a,b,c|List]
+    └─ Финал solution:
+       Head = a
+       Tail = [b,c|List]
+       
+my_append([a,b,c],[1,2],A).
+*/
+
+
+starts_with(List, []).
+starts_with([H|T1], [H|T2]) :- starts_with(T1, T2).
+
+%starts_with([a,b,c], X).
+%starts_with([a,b,c], [a,b]).
+%starts_with(X, [a,b]).
+
+
+replace([], _, _, []).
+replace([Member|T], Member, Replacement, [Replacement|RT]) :-
+    replace(T, Member, Replacement, RT).
+replace([H|T], Member, Replacement, [H|RT]) :-
+    H \= Member,
+    replace(T, Member, Replacement, RT).
+
+%replace([1,2,3,1,2,3], 1, 5, X).
+%replace([1,2,3,1,2,3], X, 5, [5,2,3,5,2,3]).
+%replace([1,2,3,1,2,3], 1, X, [5,2,3,5,2,3]).
+%replace([1,2,3,1,2,3], X, Y, [5,2,3,5,2,3]).
+%replace(X, 1, 5, [5,2,3]).
+
+
+% Базовый случай: пустой список
+my_flatten([], []).
+
+% Если голова списка — это список, рекурсивно "расплющиваем" его
+my_flatten([Head | Tail], FlattenedList) :-
+    is_list(Head),  % Проверяем, является ли Head списком
+    !,  % Отсекаем выбор, чтобы избежать дублирования решений
+    % Если голова списка (Head) является списком, то рекурсивно "расплющиваем" её и хвост (Tail),
+    % затем объединяем результаты с помощью append/3.
+    my_flatten(Head, FlattenedHead),
+    my_flatten(Tail, FlattenedTail),
+    append(FlattenedHead, FlattenedTail, FlattenedList).
+
+% Если голова списка — это элемент, добавляем его в результат
+my_flatten([Head | Tail], [Head | FlattenedTail]) :-
+    my_flatten(Tail, FlattenedTail).
+
+% ?- my_flatten([a, [[b], c], [[d]]], X).
+
+
+
+% Базовый случай: код Грея для 1 бита
+gray([_], [[0], [1]]).
+
+% Рекурсивный случай: код Грея для N бит
+gray([_ | Tail], Code) :-
+    gray(Tail, GrayTail),  % Получаем код Грея для N-1 бит
+    reverse(GrayTail, ReversedTail),  % Переворачиваем список
+    prepend(0, GrayTail, WithZero),  % Добавляем 0 к каждому коду
+    prepend(1, ReversedTail, WithOne),  % Добавляем 1 к каждому коду
+    append(WithZero, WithOne, Code).  % Объединяем списки
+
+% Вспомогательный предикат: добавляем бит в начало каждого кода
+prepend(_, [], []).
+prepend(Bit, [Code | Rest], [[Bit | Code] | PrefixedRest]) :-
+    prepend(Bit, Rest, PrefixedRest).
+
+% ?- gray([0], Code).
+% Результат
+% Code = [[0], [1]]
+
+% ?- gray([0,0], Code)
+% Результат
+% Code = [[0, 0], [0, 1], [1, 1], [1, 0]]

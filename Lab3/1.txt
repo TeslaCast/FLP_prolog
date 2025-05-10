@@ -1,0 +1,112 @@
+:- discontiguous empty_queue/1.
+:- discontiguous insert/4.
+:- discontiguous extract_min/4.
+:- discontiguous is_empty/1.
+:- discontiguous to_list/2.
+
+count_leaves(nil, 0).
+
+count_leaves(tree(_, nil, nil), 1).
+
+count_leaves(tree(_, Left, Right), Count) :-
+    count_leaves(Left, LeftCount),
+    count_leaves(Right, RightCount),
+    Count is LeftCount + RightCount.
+%count_leaves(tree(1, tree(2, nil, nil), tree(3, tree(4, nil, nil), nil)), X).
+
+% empty_queue: Создание пустой очереди
+empty_queue([]).
+
+% insert: Добавление элемента в очередь
+insert(Queue, Value, Priority, NewQueue) :-
+    insert_sorted(Queue, (Value, Priority), NewQueue).
+
+% Вспомогательная функция для вставки элемента в отсортированный список
+insert_sorted([], (Value, Priority), [(Value, Priority)]).
+insert_sorted([(V, P) | Rest], (Value, Priority), [(Value, Priority), (V, P) | Rest]) :-
+    Priority =< P.
+insert_sorted([(V, P) | Rest], (Value, Priority), [(V, P) | NewRest]) :-
+    Priority > P,
+    insert_sorted(Rest, (Value, Priority), NewRest).
+
+% extract_min: �?звлечение элемента с минимальным приоритетом
+extract_min([(Value, Priority) | Rest], Value, Priority, Rest).
+
+% is_empty: Проверка, пуста ли очередь
+is_empty([]).
+
+%to_list: Преобразование очереди в список значений в порядке возрастания приоритета
+to_list(Queue, List) :-
+    is_empty(Queue),
+    List = [].
+to_list(Queue, [Value | RestList]) :-
+    extract_min(Queue, Value, _Priority, NewQueue),
+    to_list(NewQueue, RestList).
+
+
+
+/*
+empty_queue	O(1)
+insert		O(n)
+extract_min	O(1)
+is_empty	O(1)
+to_list		O(n)
+*/
+
+
+empty_queue(pq([])).
+
+insert(pq(Q), Value, Priority, pq([(Priority, Value)|Q])).
+
+extract_min(pq(Q), Value, Priority, pq(NewQ)) :-
+    remove_min(Q, Value, Priority, NewQ).
+
+is_empty(pq([])).
+
+% Вспомогательные предикаты для неупорядоченного списка
+
+min_priority([(P, V)], P, V).
+min_priority([(P, V)|Rest], MinP, MinV) :-
+    min_priority(Rest, P2, V2),
+    (P < P2 -> MinP = P, MinV = V ; MinP = P2, MinV = V2).
+
+remove_min([(P, V)], V, P, []).
+remove_min([(P, V)|Rest], MinV, MinP, NewRest) :-
+    min_priority([(P,V)|Rest], MinP, MinV),
+    remove_min_helper([(P, V)|Rest], MinV, MinP, NewRest).
+
+remove_min_helper([(P, V)|Rest], V, P, Rest).
+remove_min_helper([(P, V)|Rest], MinV, MinP, [(P, V)|NewRest]) :-
+    remove_min_helper(Rest, MinV, MinP, NewRest).
+%to_list: Преобразование очереди в список значений в порядке возрастания приоритета
+to_list(Queue, List) :-
+    is_empty(Queue),
+    List = [].
+to_list(Queue, [Value | RestList]) :-
+    extract_min(Queue, Value, _Priority, NewQueue),
+    to_list(NewQueue, RestList).
+
+
+
+/*
+empty_queue	O(1)
+insert		O(1)
+extract_min	O(n)
+is_empty	O(1)
+to_list		O(n^2)
+*/
+
+
+/*
+ count_leaves(tree(1, tree(2, nil, nil), tree(3, tree(4, nil, nil), nil)), X).
+ insert([], a, 3, Q1), insert(Q1, b, 1, Q2), insert(Q2, c, 2, Q3).
+ extract_min([(b, 1), (c, 2), (a, 3)], Value, Priority, NewQueue).
+ to_list([(b, 1), (c, 2), (a, 3)], List).
+ insert(pq([]), a, 3, Q1).
+ extract_min(pq([(3, a)]), Value, Priority, pq(NewQ)).
+ insert(pq([]), a, 3, Q1).
+ extract_min(pq([(3, a)]), Value, Priority, pq(NewQ)).
+
+ * /
+
+
